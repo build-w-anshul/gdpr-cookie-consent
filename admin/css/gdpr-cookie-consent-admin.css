@@ -9621,7 +9621,7 @@ div#gdpr-scan-history {
 }
 #gdpr-cookie-consent-settings-app .notice-container .notice-content.notice-template-bold .template-side_column {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   gap: 25px;
   justify-content: space-between;
   align-items: center;
@@ -9634,6 +9634,10 @@ div#gdpr-scan-history {
   flex-direction: column-reverse;
   gap: 10px;
   justify-content: center;
+}
+#gdpr-cookie-consent-settings-app .notice-container .notice-content.notice-template-bold .notice-content-body .template-side_column-buttons {
+      flex-direction: column;
+
 }
 /* #gdpr-cookie-consent-settings-app .notice-container .notice-content.notice-template-bold .notice-content-body .template-side_column-buttons {
   display:flex;
