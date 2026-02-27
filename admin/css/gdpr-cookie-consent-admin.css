@@ -850,6 +850,7 @@ ul.gdpr_sub_tab li:first-child {
   color: inherit;
   margin: 0;
   font-size: 22px;
+  font-weight: 500;
 }
 .gdpr-templates-field-container
   .gdpr-template-field
@@ -861,6 +862,7 @@ ul.gdpr_sub_tab li:first-child {
   font-weight: var(--text-regular-font-weight);
   font-size: 14px;
   text-align: justify;
+  font-family: "Inter" !important;
 }
 .gdpr-templates-field-container
   .gdpr-template-field
@@ -952,11 +954,11 @@ ul.gdpr_sub_tab li:first-child {
   width: 100%;
 }
 
-.gdpr-template-field .cookie_notice_content .row_center{
+.gdpr-template-field.gdpr-almond-row .cookie_notice_content .row_center{
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 15px;
+  gap: 24px;
 }
 .gdpr-template-field .cookie_notice_content .row_center-buttons{
   flex-direction: row-reverse;
@@ -1077,6 +1079,7 @@ ul.gdpr_sub_tab li:first-child {
   margin: 0;
   font-size: 18px;
   font-weight: 500;
+  font-family: "Roboto", sans-serif;
 }
 .gdpr-templates-field-container
   .gdpr-template-field-small
@@ -1088,6 +1091,7 @@ ul.gdpr_sub_tab li:first-child {
   font-weight: var(--text-regular-font-weight);
   font-size: 12px;
   text-align: justify;
+  font-family: "Inter" !important;
 }
 .gdpr-templates-field-container
   .gdpr-template-field-small
@@ -9732,7 +9736,7 @@ div#gdpr-scan-history {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 15px;
+  gap: 24px;
 }
 
 #gdpr-cookie-consent-settings-app .notice-container .notice-content .notice-content-body .template-row_center-buttons {

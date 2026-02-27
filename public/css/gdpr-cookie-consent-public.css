@@ -39,6 +39,7 @@
     font-size: 14px;
     text-align: justify;
     text-wrap: auto;
+    font-family: "Inter";
 }
 #gdpr-cookie-consent-bar 
   .cookie_notice_buttons a{
@@ -51,6 +52,13 @@
     display: flex;
   }
  
+#gdpr-cookie-consent-bar.almond_row .cookie_notice_buttons
+  .right_buttons,
+  .cookie_notice_buttons
+  .left_buttons{
+    display: flex;
+    gap: 14px;
+}
 .cookie_notice_buttons
   .right_buttons,
   .cookie_notice_buttons
@@ -115,6 +123,12 @@
   width: 100%;
 }
 
+#gdpr-cookie-consent-bar.almond_row .row_center{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
 #gdpr-cookie-consent-bar .row_center{
   display: flex;
   flex-direction: column;
@@ -124,6 +138,13 @@
 #gdpr-cookie-consent-bar .row_center-buttons{
   flex-direction: row-reverse;
   gap: 10px;
+  align-items: stretch;
+  justify-content: center;
+  width: fit-content;
+}
+#gdpr-cookie-consent-bar.almond_row .row_center-buttons{
+  flex-direction: row-reverse;
+  gap: 14px;
   align-items: stretch;
   justify-content: center;
   width: fit-content;
@@ -386,6 +407,24 @@
   #gdpr-cookie-consent-bar .row_full-buttons{
     flex-direction: column-reverse;
   }
+  /* Case 1: left has exactly 2, right has exactly 1 */
+  #gdpr-cookie-consent-bar .row_center-buttons:has(
+    .left_buttons .gdpr_action_button:nth-child(2):last-child
+  ):has(
+    .right_buttons .gdpr_action_button:nth-child(1):last-child
+  ) {
+    flex-wrap: nowrap;
+  }
+
+  /* Case 2: left has exactly 1, right has exactly 2 */
+  #gdpr-cookie-consent-bar .row_center-buttons:has(
+    .left_buttons .gdpr_action_button:nth-child(1):last-child
+  ):has(
+    .right_buttons .gdpr_action_button:nth-child(2):last-child
+  ) {
+    flex-wrap: nowrap;
+  }
+  /*end*/
   #gdpr-cookie-consent-bar .row_center-buttons{
     flex-wrap: wrap;
   }
@@ -417,6 +456,29 @@
     text-wrap: nowrap !important;
     min-width: 120px !important;
     padding: 10px 20px !important;
+  }
+}
+@media (max-width: 728px) {
+
+  #gdpr-cookie-consent-bar.almond_row .row_center-buttons .left_buttons:empty,
+  #gdpr-cookie-consent-bar.almond_row .row_center-buttons .right_buttons:empty {
+    display: none;
+  }
+
+  #gdpr-cookie-consent-bar.almond_row .row_center-buttons {
+    width: 100%;
+    justify-content: center;
+  }
+
+  #gdpr-cookie-consent-bar.almond_row .row_center-buttons .left_buttons,
+  #gdpr-cookie-consent-bar.almond_row .row_center-buttons .right_buttons {
+    flex: 1 1 0;
+    width: auto !important;
+  }
+
+  #gdpr-cookie-consent-bar.almond_row .gdpr_action_button {
+    width: 100% !important;
+    min-width: 0 !important;
   }
 }
 

@@ -669,6 +669,8 @@ input.gdpr-wizard-thankyou-live-preview {
   color: inherit;
   margin: 0;
       font-size: var(--text-sm-font-size);
+  font-weight:500;
+  font-family: "Roboto", sans-serif;
 }
 .gdpr-templates-field-container-wizard
   .gdpr-template-field
@@ -680,6 +682,7 @@ input.gdpr-wizard-thankyou-live-preview {
   font-weight: var(--text-regular-font-weight);
       font-size: var(--text-2xs-font-size);
   text-align: justify;
+  font-family: "Inter" !important;
 }
 .gdpr-templates-field-container-wizard
   .gdpr-template-field
