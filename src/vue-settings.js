@@ -4730,6 +4730,7 @@ var gen = new Vue({
     onLawModeChange() {
       // is_auto_mode is a computed derived from law_selection_mode — assigning to
       // it here would be a write to a setter-less computed.
+      this.reload_onSelect_law = true;
       this.success_error_message = "Law selection mode updated. Save changes please before progressing further.";
       j("#gdpr-cookie-consent-save-settings-alert").css("background-color", "#72b85c");
       j("#gdpr-cookie-consent-save-settings-alert").fadeIn(400);

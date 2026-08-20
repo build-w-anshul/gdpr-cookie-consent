@@ -3982,9 +3982,9 @@ class Gdpr_Cookie_Consent_Admin {
 	 */
 	public function get_us_state_laws_for_options() {
 		$options = array(
-			__( 'CCPA/CPRA', 'gdpr-cookie-consent' )    => 'ccpa',
-			__( 'Default', 'gdpr-cookie-consent' )        => 'default_opt_out',
-			__( 'Pure', 'gdpr-cookie-consent' )        => 'pure_opt_out',
+			__( 'CCPA-Style', 'gdpr-cookie-consent' )    => 'ccpa',
+			__( 'Standard Opt-Out', 'gdpr-cookie-consent' )        => 'default_opt_out',
+			__( 'Opt-Out Only', 'gdpr-cookie-consent' )        => 'pure_opt_out',
 		);
 		
 		$options = apply_filters( 'gdprcookieconsent_cookie_usage_for_options', $options );
@@ -5113,6 +5113,15 @@ class Gdpr_Cookie_Consent_Admin {
 			if ( $is_free_tier && 'auto' === $law_selection_mode ) {
 				$law_selection_mode = 'manual';
 			}
+			$changeLanguage = false;
+			$old_law_selection_mode = get_option('gdpr_law_selection_mode', 'manual');
+			if($old_law_selection_mode !== $law_selection_mode) {
+				$changeLanguage = true;
+				if($law_selection_mode === 'auto'){
+					$this->auto_update_maxminddb();
+					$this->download_maxminddb();
+				}
+			}
 
 			update_option( 'gdpr_law_selection_mode', $law_selection_mode );
 
@@ -5157,7 +5166,8 @@ class Gdpr_Cookie_Consent_Admin {
 			}
 
 			$the_options['is_on']                              = isset( $_POST['gcc-cookie-enable'] ) && ( true === $_POST['gcc-cookie-enable'] || 'true' === $_POST['gcc-cookie-enable'] ) ? 'true' : 'false';
-			
+
+			if( $the_options['cookie_usage_for'] !== $_POST['gcc-gdpr-policy'] ) $changeLanguage = true;
 			
 			$the_options['cookie_usage_for']                   = isset( $_POST['gcc-gdpr-policy'] ) ? sanitize_text_field( wp_unslash( $_POST['gcc-gdpr-policy'] ) ) : 'gdpr';
 			// Store the canonical code; 'ccpa' / 'both' stay accepted on read.
@@ -6795,7 +6805,7 @@ class Gdpr_Cookie_Consent_Admin {
 			$the_options['lang_selected'] = isset( $_POST['select-banner-lan'] ) ? sanitize_text_field( wp_unslash( $_POST['select-banner-lan'] ) ) : 'en';
 
 			// language translation based on the selected language.
-			if ( $_POST['lang_changed'] == 'true' && isset( $_POST['select-banner-lan'] ) && in_array( $_POST['select-banner-lan'], $this->supported_languages ) ) {  //phpcs:ignore
+			if ( $changeLanguage || ( $_POST['lang_changed'] == 'true' && isset( $_POST['select-banner-lan'] ) && in_array( $_POST['select-banner-lan'], $this->supported_languages ) ) ) {  //phpcs:ignore
 				$the_options = $this->changeLanguage($the_options);				
 			}
 			if ( isset( $_POST['logo_removed'] ) && 'true' == $_POST['logo_removed'] ) {
@@ -7283,6 +7293,12 @@ class Gdpr_Cookie_Consent_Admin {
 				$text_keys_to_translate = array(
 					'dash_notify_message_eprivacy',
 					'dash_notify_message_lgpd',
+					'dash_notify_message_uk_gdpr',
+					'dash_notify_message_pdpl',
+					'dash_notify_message_pipeda',
+					'dash_notify_message_app',
+					'dash_notify_message_default_opt_out',
+					'dash_notify_message_pure_opt_out',
 					'dash_button_readmore_text',
 					'dash_button_accept_text',
 					'dash_button_accept_all_text',
@@ -13846,6 +13862,12 @@ public function gdpr_support_request_handler() {
 		$text_keys_to_translate = array(
 			'dash_notify_message_eprivacy',
 			'dash_notify_message_lgpd',
+			'dash_notify_message_uk_gdpr',
+			'dash_notify_message_pdpl',
+			'dash_notify_message_pipeda',
+			'dash_notify_message_app',
+			'dash_notify_message_default_opt_out',
+			'dash_notify_message_pure_opt_out',
 			'dash_button_readmore_text',
 			'dash_button_accept_text',
 			'dash_button_accept_all_text',
