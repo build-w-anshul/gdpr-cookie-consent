@@ -208,8 +208,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 			<div class="gdprmodal-body" :style="'scrollbar-color: ' + cookieSettingsPopupAccentColor + ' transparent;'">
 				<div class="gdpr-details-content">
 				<div class="gdpr-groups-container">
-                     <div class="gdpr-about-cookies"><?php echo esc_html( $the_options['about_message'] ); ?></div>
-                     <div class="gdpr-about-cookies iabtcf"><?php echo esc_html( $the_options['about_message'] ); ?></div>
+                     <div class="gdpr-about-cookies" v-html="gdpr_about_cookie_message"></div>
+                     <div class="gdpr-about-cookies iabtcf" v-html="gdpr_about_cookie_message"></div>
                      <div v-if="gcm_is_on" class="gdpr-about-cookies-gcm">
                           <?php echo esc_html($the_options['gcm_about_message']); ?>
                               <a :style="{'color': cookieSettingsPopupAccentColor}" 

@@ -204,17 +204,7 @@ GDPR_CCPA_COOKIE_EXPIRE =
   }
 
 
-  // Law-resolution debug logging. Set window.GDPR_LAW_DEBUG = false before this
-  // script loads (or in the console + reload) to silence it.
-  var GDPR_LAW_DEBUG =
-    typeof window.GDPR_LAW_DEBUG === "undefined" ? true : window.GDPR_LAW_DEBUG;
-  function gdpr_law_log() {
-    if (!GDPR_LAW_DEBUG) return;
-    var args = Array.prototype.slice.call(arguments);
-    args.unshift("[GDPR law]");
-  }
-
-  var gdpr_law_debug = gdpr_cookies_obj.gdpr_law_debug || false;
+  
 
   // Laws that take the GDPR arm of every branch in this file.
   //
@@ -320,69 +310,7 @@ GDPR_CCPA_COOKIE_EXPIRE =
       this.confirm_button = jQuery("#cookie_action_confirm");
       this.cancel_button = jQuery("#cookie_action_cancel");
 
-      // The banner BODY is rendered server-side (public/templates/cookie-notice.php)
-      // from the law resolved at page-render time, while these localized settings
-      // carry the STORED law — in auto mode the two can differ.
-      gdpr_law_log("init — localized (stored) cookie_usage_for:", this.settings.cookie_usage_for);
-      gdpr_law_log("init — law_selection_mode:", this.settings.law_selection_mode);
-
-      if (gdpr_law_debug) {
-        if (gdpr_law_debug.geo_available) {
-          gdpr_law_log(
-            "detected location:",
-            [gdpr_law_debug.city, gdpr_law_debug.state, gdpr_law_debug.country]
-              .filter(Boolean)
-              .join(", ") || "(empty record)",
-            "| country:",
-            gdpr_law_debug.country,
-            "| state:",
-            gdpr_law_debug.state || "(none)",
-            "| city:",
-            gdpr_law_debug.city || "(none)",
-            "| ip:",
-            gdpr_law_debug.ip
-          );
-        } else {
-          gdpr_law_log(
-            "detected location: UNAVAILABLE (ip",
-            gdpr_law_debug.ip || "?",
-            "— GeoLite2-City.mmdb missing, or no record for this IP, which is" +
-              " normal for a loopback/LAN address on a local install)." +
-              " Auto mode falls back to GDPR and the geo gate fails open."
-          );
-        }
-        gdpr_law_log(
-          "server rendered banner for law:",
-          gdpr_law_debug.rendered_law,
-          "| law resolved from location:",
-          gdpr_law_debug.resolved_law,
-          gdpr_law_debug.placeholder_message
-            ? "(placeholder copy — no messages authored for " +
-                gdpr_law_debug.rendered_law +
-                " yet: “" +
-                gdpr_law_debug.placeholder_message +
-                "”)"
-            : ""
-        );
-      } else if ("gdpr_law_debug" in gdpr_cookies_obj) {
-        // Key present but empty: the payload is gated off server-side.
-        gdpr_law_log(
-          "server-side law debug is OFF — add define( 'GDPR_LAW_DEBUG', true );" +
-            " to wp-config.php (or set WP_DEBUG true) to see the detected" +
-            " country/city. Raw value:",
-          JSON.stringify(gdpr_cookies_obj.gdpr_law_debug)
-        );
-      } else {
-        // Key absent entirely: this build of the PHP never ran. Either the plugin
-        // files on this server predate the debug payload, or a page/object cache
-        // is serving HTML generated before it existed.
-        gdpr_law_log(
-          "gdpr_cookies_obj.gdpr_law_debug is MISSING — the PHP that emits it did" +
-            " not run here. Check that the updated plugin files are deployed to" +
-            " THIS server and flush any page cache. Keys present:",
-          Object.keys(gdpr_cookies_obj).join(", ")
-        );
-      }
+      
 
       this.check_ccpa_eu();
 
@@ -1312,21 +1240,6 @@ banner.style.display = "none";
             var cookieData = JSON.parse(gdpr_cookiebar_settings);
             var cookie_for = cookieData["cookie_usage_for"];
 
-            gdpr_law_log("geo response:", {
-              law: response.law,
-              render_law: response.render_law,
-              auto_mode: response.auto_mode,
-              geo_status: response.geo_status,
-              eu_status: response.eu_status,
-              ccpa_status: response.ccpa_status,
-            });
-            gdpr_law_log(
-              "mode:",
-              cookieData["law_selection_mode"],
-              "| stored cookie_usage_for:",
-              cookie_for
-            );
-
             // In auto ("Detect Automatically") mode the applicable law is resolved
             // per visitor on the server, so the stored cookie_usage_for is only a
             // fallback. Prefer the law from the geo response; render_law is the
@@ -1339,29 +1252,13 @@ banner.style.display = "none";
               cookie_for = response.render_law;
               GDPR.settings.cookie_usage_for = response.render_law;
               GDPR.resolved_law = response.law;
-              gdpr_law_log(
-                "AUTO mode: resolved law =",
-                response.law,
-                "| banner rendered as =",
-                response.render_law
-              );
-            } else if (cookieData["law_selection_mode"] === "auto") {
-              gdpr_law_log(
-                "AUTO mode requested but NOT applied — server said auto_mode =",
-                response.auto_mode,
-                "render_law =",
-                response.render_law,
-                "(auto is Pro-only; falling back to stored law '" +
-                  cookie_for +
-                  "')"
-              );
-            }
+              
+            } 
 
-            gdpr_law_log("effective law used for banner branching:", cookie_for);
+            
 
             // For the GDPR & CCPA
             if ("both" == cookie_for) {
-              gdpr_law_log("branch: 'both' (legacy GDPR & CCPA)");
               var ccpa_optout = GDPR_Cookie.read(GDPR_CCPA_COOKIE_NAME);
               if(ccpa_optout == "yes") jQuery('#donot_sell_checkbox').prop('checked', true);
               else jQuery('#donot_sell_checkbox').prop('checked', false);
@@ -1470,15 +1367,10 @@ banner.style.display = "none";
               "au_app" == cookie_for ||
               "sa_pdpl" == cookie_for
             ) {
-              gdpr_law_log(
-                "branch: GDPR-family ('" + cookie_for + "') — consent banner"
-              );
               if (!GDPR_Cookie.exists(GDPR_ACCEPT_COOKIE_NAME)) {
                 if (response.geo_status === "on") {
-                  gdpr_law_log("-> displayHeader() (geo_status on, no consent cookie)");
                   GDPR.displayHeader();
                 } else {
-                  gdpr_law_log("-> banner suppressed (geo_status off)");
                   $("#gdpr-cookie-consent-bar").addClass("hide_show_again_dnt");
                 }
 
@@ -1506,7 +1398,6 @@ banner.style.display = "none";
                   }, banner_delay);
                 }
               } else {
-                gdpr_law_log("-> hideHeader() (consent cookie already set)");
                 if (response.geo_status != "on") {
                   $("#gdpr-cookie-consent-show-again").addClass(
                     "hide_show_again_dnt"
@@ -1515,15 +1406,10 @@ banner.style.display = "none";
                 GDPR.hideHeader();
               }
             } else if ("ccpa" == cookie_for || "us_state_laws" == cookie_for) {
-              gdpr_law_log(
-                "branch: US State Laws ('" + cookie_for + "') — do-not-sell banner"
-              );
               if (!GDPR_Cookie.exists(GDPR_CCPA_COOKIE_NAME)) {
                 if (response.geo_status === "on") {
-                  gdpr_law_log("-> displayHeader() (geo_status on, no CCPA cookie)");
                   GDPR.displayHeader();
                 } else {
-                  gdpr_law_log("-> banner suppressed (geo_status off)");
                   $("#gdpr-cookie-consent-bar").addClass("hide_show_again_dnt");
                   $("#ccpa-cookie-consent-show-again").addClass("hide_show_again_dnt"); //check this
                 }
@@ -1543,7 +1429,6 @@ banner.style.display = "none";
                 var ccpa_optout = GDPR_Cookie.read(GDPR_CCPA_COOKIE_NAME);
                 if (ccpa_optout == "yes") jQuery('#donot_sell_checkbox').prop('checked', true);
                 else jQuery('#donot_sell_checkbox').prop('checked', false);
-                gdpr_law_log("-> hideHeader() (CCPA cookie already set)");
                 if (response.geo_status != "on") {
                   $("#ccpa-cookie-consent-show-again").addClass(
                     "hide_show_again_dnt"
@@ -1551,20 +1436,11 @@ banner.style.display = "none";
                 }
                 GDPR.hideHeader();
               }
-            } else {
-              gdpr_law_log(
-                "branch: NONE — law '" +
-                  cookie_for +
-                  "' has no arm in the ladder, no banner logic ran"
-              );
             }
             GDPR.consent_renew_method();
           }
         },
         error: function () {
-          gdpr_law_log(
-            "geo AJAX failed — falling back to displayHeader() with the stored law"
-          );
           if (
             !GDPR_Cookie.exists(GDPR_ACCEPT_COOKIE_NAME) &&
             !GDPR_Cookie.exists(GDPR_CCPA_COOKIE_NAME)
@@ -2305,6 +2181,7 @@ banner.style.display = "none";
         $(
           ".gdpr_messagebar_detail .gdpr-iab-navbar .gdpr-iab-navbar-button.active"
         ).css("color", GDPR.settings.button_accept_button_color);
+        
         $(".gdpr-iab-navbar-button").removeClass("active");
         $(".gdpr-iab-navbar-button").css("color", "inherit");
         $(".tabContainer").css("display", "none");
@@ -2316,7 +2193,25 @@ banner.style.display = "none";
           GDPR.settings.button_accept_button_color
         );
         $("#gdprIABTabVendors .gdpr-iab-navbar-button").addClass("active");
-        // switch (this.id) {
+        $(
+          ".gdpr_messagebar_detail .gdpr-iab-navbar #gdprIABTabFeatures .gdpr-iab-navbar-button"
+        ).css("border-color", 'transparent');
+        $(
+          ".gdpr_messagebar_detail .gdpr-iab-navbar #gdprIABTabCategory .gdpr-iab-navbar-button"
+        ).css("border-color", 'transparent');
+        $(
+          ".gdpr_messagebar_detail .gdpr-iab-navbar #gdprIABTabVendors .gdpr-iab-navbar-button"
+        ).css("border-width", '2px');
+        $(
+          ".gdpr_messagebar_detail .gdpr-iab-navbar #gdprIABTabVendors .gdpr-iab-navbar-button"
+        ).css("border-style", 'solid');
+        $(
+          ".gdpr_messagebar_detail .gdpr-iab-navbar #gdprIABTabVendors .gdpr-iab-navbar-button"
+        ).css(
+          "border-color",
+          "transparent transparent " + GDPR.settings.button_accept_button_color + " transparent"
+        );
+        // // switch (this.id) {
         //   case "gdprIABTabCategory":
         //     $(".cat").css("display", "block");
         //     break;

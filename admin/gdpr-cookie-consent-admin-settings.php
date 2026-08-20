@@ -315,8 +315,9 @@ $remaining_percentage_scan_limit = ( get_option( 'gdpr_no_of_page_scan' ) / $tot
 			'padding-block': show_cookie_as == 'banner' ? this[`cookie_bar_vertical_padding${active_test_banner_tab}`] + 'px' : undefined,
 			'gap': this[`cookie_bar_spacing${active_test_banner_tab}`] + 'px',
 			'backdrop-filter': cookie_bar_blur > 0 ? `blur(${this[`cookie_bar_blur${active_test_banner_tab}`] * 20}px)` : undefined,
-			'box-shadow': `${this[`cookie_bar_shadow_size${active_test_banner_tab}`]}px ${this[`cookie_bar_shadow_size${active_test_banner_tab}`]}px ${this[`cookie_bar_shadow_size${active_test_banner_tab}`]*2}px ${this[`cookie_bar_shadow_color${active_test_banner_tab}`]}${Math.floor(0.5 * 255).toString(16).toUpperCase()}`
-		  }"
+			'box-shadow': `${this[`cookie_bar_shadow_size${active_test_banner_tab}`]}px ${this[`cookie_bar_shadow_size${active_test_banner_tab}`]}px ${this[`cookie_bar_shadow_size${active_test_banner_tab}`]*2}px ${this[`cookie_bar_shadow_color${active_test_banner_tab}`]}${Math.floor(0.5 * 255).toString(16).toUpperCase()}`,
+			'padding-bottom' : is_us_state_laws ? '35px' : undefined
+			}"
 		>
 			
 			<span v-if="this[`bypass_button_is_on${active_test_banner_tab}`]" :style="{ 'border': 'none', 'cursor': 'pointer', 'display':'inline-flex','justify-content': 'center', 'align-items': 'center', 'height':'20px', 'width': '20px', 'position': 'absolute', 'top': '5px', 'right': (parseInt(this[`cookie_bar_border_radius${active_test_banner_tab}`])/3 + 10) + 'px', 'border-radius': '50%','color': this[`bypass_button_text_color${active_test_banner_tab}`], 'background-color':'transparent', 'scale': this[`bypass_button_size${active_test_banner_tab}`] == 'lg' ? '110%' : this[`bypass_button_size${active_test_banner_tab}`] == 'sm' ? '90%' : '100%' }" @click="turnOffPreviewBanner">
@@ -469,7 +470,8 @@ $remaining_percentage_scan_limit = ( get_option( 'gdpr_no_of_page_scan' ) / $tot
 				'padding-block': show_cookie_as == 'banner' ? cookie_bar_vertical_padding + 'px' : undefined,
 				'gap': cookie_bar_spacing + 'px',
 				'backdrop-filter': cookie_bar_blur > 0 ? `blur(${cookie_bar_blur * 20}px)` : undefined,
-				'box-shadow': `${cookie_bar_shadow_size}px ${cookie_bar_shadow_size}px ${cookie_bar_shadow_size*2}px ${cookie_bar_shadow_color}${Math.floor(0.5 * 255).toString(16).toUpperCase()}`
+				'box-shadow': `${cookie_bar_shadow_size}px ${cookie_bar_shadow_size}px ${cookie_bar_shadow_size*2}px ${cookie_bar_shadow_color}${Math.floor(0.5 * 255).toString(16).toUpperCase()}`,
+				'padding-bottom' : is_us_state_laws ? '35px' : undefined
 			}"
 		>
 			
@@ -1374,51 +1376,58 @@ $remaining_percentage_scan_limit = ( get_option( 'gdpr_no_of_page_scan' ) / $tot
 											</p>
 										</c-col>
 
-										<c-col class="col-sm-4" style="align-items:start; margin-top: 20px;"><label><?php esc_attr_e( 'Enable debug mode', 'gdpr-cookie-consent' ); ?></label></c-col>
-										<c-col class="col-sm-8" style="margin-top: 20px;">
-											<label for="gdpr-cookie-consent-gcm-debug_mode" class="screen-reader-text"><?php esc_attr_e( 'gdpr-cookie-consent-gcm-debug_mode','gdpr-cookie-consent'); ?></label>
-											<c-switch v-bind="labelIcon" v-model="gcm_debug_mode" id="gdpr-cookie-consent-gcm-debug_mode" variant="3d"  color="success" :checked="gcm_debug_mode" v-on:update:checked="onSwitchGCMDebugMode"></c-switch>
-											<input type="hidden" name="gcc-gcm-debug-mode" v-model="gcm_debug_mode">
-											<p class="policy-description cookie-notice-readmore-container">
-												<?php
-													echo wp_kses(
-														'When enabled your browser console will display the GCM default status, update status, and whether default consent was set in correct order.<br>To open the browser console, right click on any webpage, select Inspect -> Console.',
-														[
-															'br'     => [],
-															'p'      => [],
-															'a'      => [
-																'href'   => true,
-																'title'  => true,
-																'target' => true,
-															],
-															'i'      => [],
-															'em'     => [],
-															'b'      => [],
-															'strong' => [],
-														]
-													);
-												?>
-											</p>
-										</c-col>
-										<c-col class="col-sm-4" style="align-items:start; margin-top: 20px;"><label><?php esc_attr_e( 'Check GCM Status', 'gdpr-cookie-consent' ); ?></label></c-col>
-										<c-col class="col-sm-8" style="margin-top: 10px; margin-bottom: 20px;">
-											<c-button v-show="gcm_scan_flag === false" id="checkGcmStatusButton" class="btn btn-info" variant="outline" @click="checkGCMStatus">{{ 'Check' }}</c-button>
-											<c-button v-show="gcm_scan_flag === true" id="checkGcmStatusLoadingButton" class="btn btn-info" variant="outline" disabled><span class="checkGCMloader"></span>{{ 'Checking Now' }}</c-button>
-											<div v-show="gcm_scan_result != ''">
-												<p class="gcm_status_success" v-show="gcm_scan_result['gtagExists'] == true && gcm_scan_result['hasConsentDefault'] == true && gcm_scan_result['hasConsentUpdate'] == true && gcm_scan_result['onTime'] == true">No errors detected</p>
-												<p class="gcm_status_error" v-show="gcm_scan_result['gtagExists'] == false" >No tag Present</p>
-												<p class="gcm_status_error" v-show="gcm_scan_result['hasConsentDefault'] == false" >Default Consent Missing</p>
-												<p class="gcm_status_error" v-show="gcm_scan_result['hasConsentUpdate'] == false" >Update Conset Missing</p>
-												<p class="gcm_status_error" v-show="gcm_scan_result['onTime'] == false" >Default Consent set too late</p>
-												<p v-show="gcm_scan_result['gtagExists'] != true || gcm_scan_result['hasConsentDefault'] != true || gcm_scan_result['hasConsentUpdate'] != true || gcm_scan_result['onTime'] != true" style="color:gray; font-weight:400;">Read the <a class="cookie-notice-readmore" href = "https://wplegalpages.com/docs/wplp-docs/guides/google-consent-mode-troubleshooting-with-wplp-compliance-platform/" target="_blank">documentation</a> to know more about the errors and how to fix them.</p>
-											</div>
-										</c-col>
-										<?php if($the_options['is_iabtcf_on'] === true || $the_options['is_iabtcf_on'] === "true" || $the_options['is_iabtcf_on'] === 1) : ?>
-											<div class="col-sm-12 col" style="display: flex;" v-html="gcm_adver_mode_data" id="gcm-advertiser-mode-container"></div>
-											<div id="gcm-advertiser-mode-container-loader"></div>
-										<?php endif; ?>
-									</c-row>
+									<c-col class="col-sm-4" style="align-items:start; margin-top: 20px;"><label><?php esc_attr_e( 'Enable debug mode', 'gdpr-cookie-consent' ); ?></label></c-col>
+									<c-col class="col-sm-8" style="margin-top: 20px;">
+										<label for="gdpr-cookie-consent-gcm-debug_mode" class="screen-reader-text"><?php esc_attr_e( 'gdpr-cookie-consent-gcm-debug_mode','gdpr-cookie-consent'); ?></label>
+										<c-switch v-bind="labelIcon" v-model="gcm_debug_mode" id="gdpr-cookie-consent-gcm-debug_mode" variant="3d"  color="success" :checked="gcm_debug_mode" v-on:update:checked="onSwitchGCMDebugMode"></c-switch>
+										<input type="hidden" name="gcc-gcm-debug-mode" v-model="gcm_debug_mode">
+										<p class="policy-description cookie-notice-readmore-container">
+											<?php
+												echo wp_kses(
+													'When enabled your browser console will display the GCM default status, update status, and whether default consent was set in correct order.<br>To open the browser console, right click on any webpage, select Inspect -> Console.',
+													[
+														'br'     => [],
+														'p'      => [],
+														'a'      => [
+															'href'   => true,
+															'title'  => true,
+															'target' => true,
+														],
+														'i'      => [],
+														'em'     => [],
+														'b'      => [],
+														'strong' => [],
+													]
+												);
+											?>
+										</p>
+									</c-col>
+									<c-col class="col-sm-4" style="align-items:start; margin-top: 20px;"><label><?php esc_attr_e( 'Check GCM Status', 'gdpr-cookie-consent' ); ?></label></c-col>
+									<c-col class="col-sm-8" style="margin-top: 10px; margin-bottom: 20px;">
+										<c-button v-show="gcm_scan_flag === false" id="checkGcmStatusButton" class="btn btn-info" variant="outline" @click="checkGCMStatus">{{ 'Check' }}</c-button>
+										<c-button v-show="gcm_scan_flag === true" id="checkGcmStatusLoadingButton" class="btn btn-info" variant="outline" disabled><span class="checkGCMloader"></span>{{ 'Checking Now' }}</c-button>
+										<div v-show="gcm_scan_result != ''">
+											<p class="gcm_status_success" v-show="gcm_scan_result['gtagExists'] == true && gcm_scan_result['hasConsentDefault'] == true && gcm_scan_result['hasConsentUpdate'] == true && gcm_scan_result['onTime'] == true">No errors detected</p>
+											<p class="gcm_status_error" v-show="gcm_scan_result['gtagExists'] == false" >No tag Present</p>
+											<p class="gcm_status_error" v-show="gcm_scan_result['hasConsentDefault'] == false" >Default Consent Missing</p>
+											<p class="gcm_status_error" v-show="gcm_scan_result['hasConsentUpdate'] == false" >Update Conset Missing</p>
+											<p class="gcm_status_error" v-show="gcm_scan_result['onTime'] == false" >Default Consent set too late</p>
+											<p v-show="gcm_scan_result['gtagExists'] != true || gcm_scan_result['hasConsentDefault'] != true || gcm_scan_result['hasConsentUpdate'] != true || gcm_scan_result['onTime'] != true" style="color:gray; font-weight:400;">Read the <a class="cookie-notice-readmore" href = "https://wplegalpages.com/docs/wplp-docs/guides/google-consent-mode-troubleshooting-with-wplp-compliance-platform/" target="_blank">documentation</a> to know more about the errors and how to fix them.</p>
+										</div>
+									</c-col>
+									<?php if($the_options['is_iabtcf_on'] === true || $the_options['is_iabtcf_on'] === "true" || $the_options['is_iabtcf_on'] === 1) : ?>
+										<div class="col-sm-12 col" style="display: flex;" v-html="gcm_adver_mode_data" id="gcm-advertiser-mode-container"></div>
+										<div id="gcm-advertiser-mode-container-loader"></div>
+									<?php endif; ?>
+								</c-row>
 								</div>
+								
+
+
+
+
+
+
 								<?php do_action( 'gdpr_consent_settings_pro_bottom' ); ?>								
 							</c-card-body>
 						</c-card>
@@ -1554,7 +1563,7 @@ $remaining_percentage_scan_limit = ( get_option( 'gdpr_no_of_page_scan' ) / $tot
 							<c-col class="col-sm-32"><div id="gdpr-cookie-consent-settings-configure-cookie-bar-top"><?php esc_html_e( 'Banner Settings', 'gdpr-cookie-consent' ); ?></div></c-col>
 						</c-row>
 						<c-row v-show="is_auto_mode">
-							<c-col class="col-sm-4"><label><?php esc_attr_e( 'Select a law to edit corresponding banner message', 'gdpr-cookie-consent' ); ?></label></c-col>
+							<c-col class="col-sm-4"><label><?php esc_attr_e( 'Select a privacy law', 'gdpr-cookie-consent' ); ?><tooltip text="<?php esc_html_e( 'Select the privacy law whose banner message you want to customize.', 'gdpr-cookie-consent' ); ?>"></tooltip></label></c-col>
 							<c-col class="col-sm-8">
 								<v-select class="form-group" id="gdpr-cookie-bar-edit-law" :reduce="label => label.code" :options="policy_options" :selectable="option => isOptionSelectable(option)" label="label" v-model="banner_edit_law">
 									<template #option="option">
@@ -1569,7 +1578,7 @@ $remaining_percentage_scan_limit = ( get_option( 'gdpr_no_of_page_scan' ) / $tot
 							</c-col>
 						</c-row>
 						<c-row v-show="(!is_auto_mode && is_us_state_laws) || (is_auto_mode && banner_edit_law === 'us_state_laws')">
-							<c-col class="col-sm-4"><label><?php esc_attr_e( 'Select a law to edit corresponding banner message', 'gdpr-cookie-consent' ); ?></label></c-col>
+							<c-col class="col-sm-4"><label><?php esc_attr_e( 'Select a banner type', 'gdpr-cookie-consent' ); ?><tooltip text="<?php esc_html_e( 'Choose which type of opt-out banner you want to customize.', 'gdpr-cookie-consent' ); ?>"></tooltip></label></c-col>
 							<c-col class="col-sm-8">
 								<v-select class="form-group" id="gdpr-cookie-bar-edit-law" :reduce="label => label.code" :options="us_policy_options" v-model="us_state_laws_edit_law">
 								</v-select>
@@ -1989,7 +1998,6 @@ $remaining_percentage_scan_limit = ( get_option( 'gdpr_no_of_page_scan' ) / $tot
 
 							</c-card-body>
 						</c-card>
-					</c-card>
 					</div>
 					<div class="gdpr-design-right-column">
 					<c-card  v-if="cookie_bar_settings_open" v-show="!ab_testing_enabled && gdpr_policy != 'both'" class="desgin_card">
@@ -9398,7 +9406,7 @@ $remaining_percentage_scan_limit = ( get_option( 'gdpr_no_of_page_scan' ) / $tot
 												<c-input type="hidden" name="gdpr-cookie-bar-logo-url-holder" id="gdpr-cookie-bar-logo-url-holder"  class="regular-text"> </c-input>
 									</c-col>
 								</c-row>
-								<!-- </c-card-body> -->
+								</c-card-body>
 
 								</c-card>
 							<c-card class="desgin_card" v-show="!ab_testing_enabled && gdpr_policy == 'both' && active_default_multiple_legislation === 'gdpr'">
@@ -10562,9 +10570,7 @@ $remaining_percentage_scan_limit = ( get_option( 'gdpr_no_of_page_scan' ) / $tot
 								</c-card-body>
 								
 										
-						</c-card-body>	
 							</c-card>
-					</c-card>
 					
 						<!-- Desgin Banner preview if A/B Testing is enabled  and GDPR&CCPA both are not selected-->
 		<div class="gdpr-design-tab-layout" :class="{ 'panel-open': cookie_bar_settings_open }">
@@ -11259,7 +11265,6 @@ $remaining_percentage_scan_limit = ( get_option( 'gdpr_no_of_page_scan' ) / $tot
 
 						</c-card-body>
 					</c-card>
-					</c-card-body>		
 				</c-card>
 
 			</div>
@@ -11532,8 +11537,6 @@ $remaining_percentage_scan_limit = ( get_option( 'gdpr_no_of_page_scan' ) / $tot
 
 			</div>
 		</div>
-			</c-card-body>
-			</c-card>
 				</c-tab>
 
 			<!-- CUSTOM CSS START -->
@@ -11612,28 +11615,6 @@ $remaining_percentage_scan_limit = ( get_option( 'gdpr_no_of_page_scan' ) / $tot
 
 				
 
-				<!-- Connection Tab  -->
-				<?php if ( $is_user_connected && ! $pro_is_activated ) : ?>
-				<c-tab title="<?php esc_attr_e( 'Connection', 'gdpr-cookie-consent' ); ?>" href="#cookie_settings#connection" id="gdpr-cookie-consent-connection">
-					<c-card class="gdpr-cookie-consent-settings-cookie-notice-top">
-							<c-card-body class="gdpr-connection-card-body" >
-								<div class="gdpr-connect-information">
-									<div class="gdpr-connection-success-tick">
-										<div class="gdpr-connection-success-img"><img src="<?php echo esc_url( GDPR_COOKIE_CONSENT_PLUGIN_URL ) . 'admin/images/check_ring.svg'; ?>" alt="API Connection Success Mark"></div>
-										<div class="gdpr-connection-success-descreption"><?php esc_html_e( 'Your website is connected to WPLP Cookie Consent', 'gdpr-cookie-consent' ); ?></div>
-									</div>
-									<div class="gdpr-connect-information-section">
-										<p class="gpdr-email-info"><span class="gdpr-info-title" ><?php esc_html_e( 'Email : ', 'gdpr-cookie-consent' ); ?></span> <?php echo esc_html( $api_user_email ); ?>  </p>
-										<p><span class="gdpr-info-title" ><?php esc_html_e( 'Site Key : ', 'gdpr-cookie-consent' ); ?></span> <?php echo esc_html( $api_user_site_key ); ?>  </p>
-										<p><span class="gdpr-info-title" ><?php esc_html_e( 'Plan : ', 'gdpr-cookie-consent' ); ?></span> <?php echo esc_html( $api_user_plan ); ?>  </p>
-										<!-- API Disconnect Button  -->
-										<div class="api-connection-disconnect-btn" ><?php esc_attr_e( 'Disconnect', 'gdpr-cookie-consent' ); ?></div>
-									</div>
-								</div>
-							</c-card-body>
-						</c-card>
-				</c-tab>
-				<?php endif; ?>
 			</c-tabs>
 			</div>
 		</c-form>
