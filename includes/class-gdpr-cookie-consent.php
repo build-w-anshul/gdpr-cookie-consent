@@ -246,7 +246,6 @@ class Gdpr_Cookie_Consent {
 			$this->loader->add_action( 'wp_ajax_gcc_save_gcm_region_settings', $plugin_admin, 'gdpr_cookie_consent_ajax_save_gcm_region', 10, 1 );
 			$this->loader->add_action( 'wp_ajax_ab_testing_enable', $plugin_admin, 'gdpr_cookie_consent_ab_testing_enable', 10, 1 );
 			$this->loader->add_action( 'wp_ajax_gcc_restore_default_settings', $plugin_admin, 'gdpr_cookie_consent_ajax_restore_default_settings', 10, 1 );
-			$this->loader->add_action( 'wp_ajax_gcc_auto_generated_banner', $plugin_admin, 'gdpr_cookie_consent_ajax_auto_generated_banner', 10, 1 );
 			$this->loader->add_action( 'wp_ajax_gcc_switch_preview_banner', $plugin_admin, 'gdpr_cookie_consent_ajax_switch_preview_banner', 10, 1 );
 			$this->loader->add_action( 'wp_ajax_gcc_get_preview_banner_state', $plugin_admin, 'gdpr_cookie_consent_ajax_get_preview_banner_state', 10, 1 );
 			$this->loader->add_action( 'wp_ajax_gcc_save_schedule_scan', $plugin_admin, 'gdpr_cookie_consent_ajax_save_schedule_scan', 10, 1 );
@@ -287,6 +286,7 @@ class Gdpr_Cookie_Consent {
 			$this->loader->add_action( 'admin_init', $plugin_admin, 'gdpr_ab_testing_complete' );
 			// Register translation strings for extraction only
 			$this->loader->add_action( 'admin_init', $plugin_admin, 'gdpr_cookie_consent_register_translation_strings' );
+			$this->loader->add_action( 'rest_api_init', $plugin_admin, 'gdpr_cookie_data_endpoint' );
 		
 		}
 	}
@@ -310,7 +310,6 @@ class Gdpr_Cookie_Consent {
 			$this->loader->add_action( 'template_redirect', $plugin_public, 'gdprcookieconsent_template_redirect', 99 );
 			$this->loader->add_action( 'wp_footer', $plugin_public, 'gdprcookieconsent_inject_gdpr_script' );
 			// added rest endpoint for fetching current options for banner.
-			$this->loader->add_action( 'rest_api_init', $plugin_public, 'gdpr_cookie_data_endpoint' );
 			if ( ! get_option( 'wpl_pro_active' ) ) {
 				// action hooks for geo integration.
 				$this->loader->add_action( 'wp_ajax_gdpr_fire_scripts', $plugin_public, 'gdprcookieconsent_inject_sripts_on_consent' );
@@ -1760,7 +1759,7 @@ class Gdpr_Cookie_Consent {
 								}
 							},
 							"dataDeclaration": [1, 3, 4, 6, 8, 10, 11],
-							"deviceStorageDisclosureUrl": "https://vdxtv.expo.workers.dev"
+							"deviceStorageDisclosureUrl": ""
 							},
 							{
 							"id": 2,
@@ -1792,7 +1791,7 @@ class Gdpr_Cookie_Consent {
 								}
 							},
 							"dataDeclaration": [1, 2, 4, 6, 11],
-							"deviceStorageDisclosureUrl": "https://static.dp.cpx.to/gvl/deviceStorageDisclosure.json"
+							"deviceStorageDisclosureUrl": ""
 							},
 							{
 							"id": 4,
@@ -1824,7 +1823,7 @@ class Gdpr_Cookie_Consent {
 								}
 							},
 							"dataDeclaration": [1, 2, 3, 4, 5, 6, 8, 9, 11],
-							"deviceStorageDisclosureUrl": "https://roqad-public.s3.eu-central-1.amazonaws.com/tcf-disclosure.json"
+							"deviceStorageDisclosureUrl": ""
 							},
 							{
 							"id": 6,
@@ -1865,7 +1864,7 @@ class Gdpr_Cookie_Consent {
 								}
 							},
 							"dataDeclaration": [1, 2, 3, 4, 6, 8, 10, 11],
-							"deviceStorageDisclosureUrl": "https://help.adspirit.de/deviceStorage.json"
+							"deviceStorageDisclosureUrl": ""
 							}
 						],
 						"allvendors":[1,2,4,6],
