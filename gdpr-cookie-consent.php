@@ -10,7 +10,7 @@
  * Plugin Name:       Cookie Banner for GDPR / CCPA - WPLP Cookie Consent
  * Plugin URI:        https://wplegalpages.com/
  * Description:       Cookie Consent will help you put up a subtle banner in the footer of your website to showcase compliance status regarding the EU Cookie law.
- * Version:           4.4.0
+ * Version:           4.4.1
  * Author:            WPLP Compliance Platform
  * Author URI:        https://wplegalpages.com
  * License:           GPLv3
@@ -31,7 +31,7 @@ define( 'GDPR_COOKIE_CONSENT_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 /**
  * Currently plugin version.
  */
-define( 'GDPR_COOKIE_CONSENT_VERSION', '4.4.0' );
+define( 'GDPR_COOKIE_CONSENT_VERSION', '4.4.1' );
 define( 'GDPR_COOKIE_CONSENT_PLUGIN_DEVELOPMENT_MODE', false );
 define( 'GDPR_COOKIE_CONSENT_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
 define( 'GDPR_COOKIE_CONSENT_PLUGIN_PATH', plugin_dir_path( __FILE__ ) );
@@ -69,6 +69,20 @@ if ( ! defined( 'GDPR_APP_URL' ) ) {
 if ( ! defined( 'GDPR_API_URL' ) ) {
 	define( 'GDPR_API_URL', 'https://app.wplegalpages.com/wp-json/gdpr/v2/' );
 }
+
+ 
+if ( ! defined( 'APPWPLP_SECRET_KEY_FEATURE_VERSION' ) ) {
+	define( 'APPWPLP_SECRET_KEY_FEATURE_VERSION', '4.4.1' );
+}
+
+if ( ! defined( 'APPWPLP_SECRET_KEY_OPTION' ) ) {
+	define( 'APPWPLP_SECRET_KEY_OPTION', 'appwplp_shared_secret_key' );
+}
+ 
+if ( ! defined( 'APPWPLP_SECRET_KEY_STATUS_OPTION' ) ) {
+	define( 'APPWPLP_SECRET_KEY_STATUS_OPTION', 'appwplp_shared_secret_key_status' );
+}
+add_action('admin_init', 'appwplp_maybe_retry_secret_key_registration');
 
 /**
  * Temporay fix for a critical error
@@ -128,6 +142,61 @@ function activate_gdpr_cookie_consent() {
 	// Get redirect URL.
 	add_option( 'redirect_after_activation_option', true );
 }
+/**
+ * Generates a cryptographically strong 32-character secret key.
+ *
+ * @return string
+ */
+function appwplp_generate_secret_key() {
+	// random_bytes(16) -> 32 hex characters. Cryptographically secure.
+	return bin2hex( random_bytes( 16 ) );
+}
+/**
+ * Generates and stores a local secret key for this site, if one doesn't
+ * already exist. Does NOT register it with the server - that happens in
+ * step 3, triggered separately after this runs.
+ */
+
+function appwplp_maybe_generate_secret_key() {
+	$existing_key    = get_option( APPWPLP_SECRET_KEY_OPTION );
+	$existing_status = get_option( APPWPLP_SECRET_KEY_STATUS_OPTION );
+
+	if ( ! empty( $existing_key ) && 'confirmed' === $existing_status ) {
+		// Already confirmed - nothing to do.
+		return;
+	}
+
+	if ( ! empty( $existing_key ) ) {
+		update_option( APPWPLP_SECRET_KEY_STATUS_OPTION, 'pending', false );
+		do_action( 'appwplp_secret_key_generated', $existing_key );
+		return;
+	}
+
+	// No key - first-time generation.
+	$new_key = appwplp_generate_secret_key();
+
+	update_option( APPWPLP_SECRET_KEY_OPTION, $new_key, false );
+	update_option( APPWPLP_SECRET_KEY_STATUS_OPTION, 'pending', false );
+
+	do_action( 'appwplp_secret_key_generated', $new_key );
+}
+
+function appwplp_maybe_retry_secret_key_registration() {
+	$existing_status = get_option( APPWPLP_SECRET_KEY_STATUS_OPTION );
+
+	if ( 'confirmed' === $existing_status || empty( get_option( APPWPLP_SECRET_KEY_OPTION ) ) ) {
+		return;
+	}
+
+	$last_attempt = get_option( 'appwplp_secret_key_last_retry', 0 );
+	if ( ( time() - (int) $last_attempt ) < 15 * MINUTE_IN_SECONDS ) {
+		return; 
+	}
+
+	update_option( 'appwplp_secret_key_last_retry', time(), false );
+
+	appwplp_maybe_generate_secret_key();
+}
 
 /**
  * Redirecting to the wizard page on plguin activation.
@@ -158,6 +227,7 @@ function deactivate_gdpr_cookie_consent() {
 }
 
 register_activation_hook( __FILE__, 'activate_gdpr_cookie_consent' );
+register_activation_hook( __FILE__, 'appwplp_maybe_generate_secret_key' );
 register_deactivation_hook( __FILE__, 'deactivate_gdpr_cookie_consent' );
 
 require plugin_dir_path( __FILE__ ) . 'includes/class-gdpr-cookies-read-csv.php';

@@ -2,10 +2,10 @@
 Contributors: wplegalpages
 Donate link: https://wplegalpages.com/
 Tags: cookie consent, cookie banner, consent management, cookie scanner, script blocking
-Requires at least: 3.3.1
-Tested up to: 7.0.2
-Stable tag: 4.4.0
-Requires PHP: 7.0
+Requires at least: 5.3
+Tested up to: 7.1
+Stable tag: 4.4.1
+Requires PHP: 7.4
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -36,8 +36,6 @@ The plugin is built to be easy to configure out of the box, while still giving y
 - Drag & drop banner builder – match your brand with custom colors, layouts, fonts, and button text, no CSS required
 
 - Free tier includes real compliance tools – cookie scanning and script blocking aren't locked behind a paywall
-
-- No visitor-based limits – no traffic caps, pageview limits, or per-visitor pricing
 
 - WP Consent API support – shares visitor consent state with compatible WordPress plugins
 
@@ -216,6 +214,20 @@ Yes. The plugin is translation-ready and works with popular multilingual plugins
 11. Consent Log table
 
 == Change Log ==
+
+= 4.4.1 =
+* **New**
+    * Added support for UK GDPR compliance requirements.
+    * Added support for 19 U.S. State Privacy Laws, including CPRA, VCDPA, CPA, CTDPA, UCPA, and other applicable state regulations.
+    * Added support for PIPEDA (Canada) compliance requirements.
+    * Added support for Australian Privacy Principles (APPs) compliance requirements.
+    * Added support for PDPL compliance requirements for supported regions.
+    * Introduced a new Auto Detect Privacy Law option that automatically displays the appropriate cookie banner based on a visitor's location.
+
+* **Improvements**
+    * Enhanced geo-targeting capabilities to detect visitors' countries and U.S. states more accurately.
+    * Improved privacy law management settings for easier configuration and customization.
+    * Updated banner behavior to dynamically apply the correct consent model based on applicable privacy regulations.
 
 = 4.4.0 =
 * Revamped Default Cookie Banner
@@ -897,6 +909,20 @@ Yes. The plugin is translation-ready and works with popular multilingual plugins
 * Initial version
 
 == Upgrade Notice ==
+
+= 4.4.1 =
+* **New**
+    * Added support for UK GDPR compliance requirements.
+    * Added support for 19 U.S. State Privacy Laws, including CPRA, VCDPA, CPA, CTDPA, UCPA, and other applicable state regulations.
+    * Added support for PIPEDA (Canada) compliance requirements.
+    * Added support for Australian Privacy Principles (APPs) compliance requirements.
+    * Added support for PDPL compliance requirements for supported regions.
+    * Introduced a new Auto Detect Privacy Law option that automatically displays the appropriate cookie banner based on a visitor's location.
+
+* **Improvements**
+    * Enhanced geo-targeting capabilities to detect visitors' countries and U.S. states more accurately.
+    * Improved privacy law management settings for easier configuration and customization.
+    * Updated banner behavior to dynamically apply the correct consent model based on applicable privacy regulations.
 
 = 4.4.0 =
 * Revamped Default Cookie Banner

@@ -258,7 +258,7 @@ $site_domain = wp_parse_url($site_url, PHP_URL_HOST);
 								</div> -->
 								<!-- Cookie Settings tab  -->
 								<div class="gdpr-cookie-consent-admin-tab gdpr-cookie-consent-admin-cookie-settings-tab" data-tab="cookie_settings">
-									<div style="display:flex; justify-content:space-between;gap:45px">
+									<div style="display:flex; justify-content:space-between;gap:45px;width:100%;padding-right:10px;">
 										<?php echo esc_html('Banner&nbsp;Settings','gdpr-cookie-consent'); ?>
 										<svg class="gdpr-subnav-chevron" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
 											<path d="M15 12.5L10 7.5L5 12.5" stroke="#074EA8"/>
@@ -340,9 +340,14 @@ $site_domain = wp_parse_url($site_url, PHP_URL_HOST);
 							
 								
 							
-								<!-- Advanced Settings Tab  -->
+								<!-- Advanced Tab  -->
 								<div class="gdpr-cookie-consent-admin-tab gdpr-cookie-consent-admin-advanced-settings-tab" data-tab="advanced_settings">
-									<?php echo esc_html('Advanced&nbsp;Settings','gdpr-cookie-consent'); ?>
+									<div style="display:flex; justify-content:space-between;gap:45px;width:100%;padding-right:10px;">
+										<?php echo esc_html('Advanced','gdpr-cookie-consent'); ?>
+										<svg class="gdpr-subnav-chevron" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+											<path d="M15 12.5L10 7.5L5 12.5" stroke="#074EA8"/>
+										</svg>
+									</div>
 								</div>
 								<?php
 								if ( $pro_is_activated ) {
@@ -686,9 +691,17 @@ $site_domain = wp_parse_url($site_url, PHP_URL_HOST);
 							<!-- <div class="gdpr-cookie-consent-admin-create-cookie-content gdpr-cookie-consent-admin-tab-content" id="create_cookie_banner">
 								<?php //require_once plugin_dir_path( __FILE__ ) . 'gdpr-create-cookie-banner-tab-template.php'; ?>
 							</div> -->
-							<!-- cookie settings content -->
-							<div class="gdpr-cookie-consent-admin-cookie-settings-content gdpr-cookie-consent-admin-tab-content" id="cookie_settings">
-								<?php require_once plugin_dir_path( __FILE__ ) . 'gdpr-cookie-settings-tab-template.php'; ?>
+
+							<div id="wplp-cookie-consent-admin-app">
+								<!-- cookie settings content -->
+								<div class="gdpr-cookie-consent-admin-cookie-settings-content gdpr-cookie-consent-admin-tab-content" id="cookie_settings">
+									<?php require_once plugin_dir_path( __FILE__ ) . 'gdpr-cookie-settings-tab-template.php'; ?>
+								</div>
+
+								<!-- Advanced Settings content  -->
+								<div class="gdpr-cookie-consent-admin-advanced-settings-content gdpr-cookie-consent-admin-tab-content" id="advanced_settings">
+									<?php require_once plugin_dir_path( __FILE__ ) . 'gdpr-advanced-settings-tab-template.php'; ?>
+								</div>
 							</div>
 
 							<!-- cookie manager content -->
@@ -710,11 +723,6 @@ $site_domain = wp_parse_url($site_url, PHP_URL_HOST);
 							<div class="gdpr-cookie-consent-admin-policy-data-content gdpr-cookie-consent-admin-tab-content" id="policy_data">
 								<?php do_action( 'add_policy_data_content' ); ?>
 								<?php require_once plugin_dir_path( __FILE__ ) . 'gdpr-policy-data-tab-template.php'; ?>
-							</div>
-
-							<!-- Advanced Settings content  -->
-							<div class="gdpr-cookie-consent-admin-advanced-settings-content gdpr-cookie-consent-admin-tab-content" id="advanced_settings">
-								<?php require_once plugin_dir_path( __FILE__ ) . 'gdpr-advanced-settings-tab-template.php'; ?>
 							</div>
 
 							<!-- consent log data content  -->
