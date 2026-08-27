@@ -10671,9 +10671,9 @@ $remaining_percentage_scan_limit = ( get_option( 'gdpr_no_of_page_scan' ) / $tot
 							</c-col>
 						</c-row>
 						<div style="display: flex; justify-content: flex-end; margin-top: 10px;">
-
+							<p class="design-settings-text"><?php esc_html_e("Design Settings", "gdpr-cookie-banner")?></p>
 						<c-button class="gdpr-cookie-bar-settings-icon" :style="(cookie_bar_settings_open1) ? { backgroundColor: '#EAF4FF !important', color: '#2F80ED !important' } : {}"   @click="openConfigurationPanel('cookie_bar_settings_open1')">
-							<svg width="50" height="50" viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+							<svg width="40" height="40" viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg">
 								<g clip-path="url(#clip0_4634_794)">
 								<path d="M14.1462 30.3445C11.8737 32.5765 13.7937 34.8685 10.7757 38.263C9.41368 39.7975 16.3827 39.3295 19.8342 35.9365C21.2997 34.495 20.8857 32.398 19.3152 30.853C17.7447 29.311 15.6102 28.903 14.1462 30.3445ZM39.3102 10.9885C38.1462 9.84253 25.2417 20.182 21.4017 23.9575C19.4952 25.8325 18.8592 26.8375 18.2757 27.5875C18.0207 27.916 18.3582 28.015 18.5067 28.0915C19.2627 28.4785 19.7907 28.8355 20.4732 29.506C21.1572 30.1765 21.5217 30.6955 21.9117 31.4395C21.9912 31.5865 22.0932 31.9165 22.4247 31.6675C23.1897 31.093 24.2112 30.466 26.1177 28.594C29.9592 24.82 40.4772 12.133 39.3102 10.9885Z" fill="currentColor"/>
 								</g>
