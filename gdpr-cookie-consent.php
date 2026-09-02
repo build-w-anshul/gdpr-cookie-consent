@@ -10,7 +10,7 @@
  * Plugin Name:       Cookie Banner for GDPR / CCPA - WPLP Cookie Consent
  * Plugin URI:        https://wplegalpages.com/
  * Description:       Cookie Consent will help you put up a subtle banner in the footer of your website to showcase compliance status regarding the EU Cookie law.
- * Version:           4.4.1
+ * Version:           4.4.2
  * Author:            WPLP Compliance Platform
  * Author URI:        https://wplegalpages.com
  * License:           GPLv3
@@ -31,7 +31,7 @@ define( 'GDPR_COOKIE_CONSENT_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 /**
  * Currently plugin version.
  */
-define( 'GDPR_COOKIE_CONSENT_VERSION', '4.4.1' );
+define( 'GDPR_COOKIE_CONSENT_VERSION', '4.4.2' );
 define( 'GDPR_COOKIE_CONSENT_PLUGIN_DEVELOPMENT_MODE', false );
 define( 'GDPR_COOKIE_CONSENT_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
 define( 'GDPR_COOKIE_CONSENT_PLUGIN_PATH', plugin_dir_path( __FILE__ ) );
@@ -72,7 +72,7 @@ if ( ! defined( 'GDPR_API_URL' ) ) {
 
  
 if ( ! defined( 'APPWPLP_SECRET_KEY_FEATURE_VERSION' ) ) {
-	define( 'APPWPLP_SECRET_KEY_FEATURE_VERSION', '4.4.1' );
+	define( 'APPWPLP_SECRET_KEY_FEATURE_VERSION', '4.4.2' );
 }
 
 if ( ! defined( 'APPWPLP_SECRET_KEY_OPTION' ) ) {
@@ -82,7 +82,10 @@ if ( ! defined( 'APPWPLP_SECRET_KEY_OPTION' ) ) {
 if ( ! defined( 'APPWPLP_SECRET_KEY_STATUS_OPTION' ) ) {
 	define( 'APPWPLP_SECRET_KEY_STATUS_OPTION', 'appwplp_shared_secret_key_status' );
 }
-add_action('admin_init', 'appwplp_maybe_retry_secret_key_registration');
+
+if ( ! defined( 'APPWPLP_SECRET_KEY_VERSION_OPTION' ) ) {
+	define( 'APPWPLP_SECRET_KEY_VERSION_OPTION', 'appwplp_secret_key_feature_version' );
+}
 
 /**
  * Temporay fix for a critical error
@@ -147,9 +150,11 @@ function activate_gdpr_cookie_consent() {
  *
  * @return string
  */
-function appwplp_generate_secret_key() {
-	// random_bytes(16) -> 32 hex characters. Cryptographically secure.
-	return bin2hex( random_bytes( 16 ) );
+if ( ! function_exists( 'appwplp_generate_secret_key' ) ) {
+	function appwplp_generate_secret_key() {
+		// random_bytes(16) -> 32 hex characters. Cryptographically secure.
+		return bin2hex( random_bytes( 16 ) );
+	}
 }
 /**
  * Generates and stores a local secret key for this site, if one doesn't
@@ -157,46 +162,81 @@ function appwplp_generate_secret_key() {
  * step 3, triggered separately after this runs.
  */
 
-function appwplp_maybe_generate_secret_key() {
-	$existing_key    = get_option( APPWPLP_SECRET_KEY_OPTION );
-	$existing_status = get_option( APPWPLP_SECRET_KEY_STATUS_OPTION );
+if ( ! function_exists( 'appwplp_maybe_generate_secret_key' ) ) {
+	function appwplp_maybe_generate_secret_key() {
+		$existing_key    = get_option( APPWPLP_SECRET_KEY_OPTION );
+		$existing_status = get_option( APPWPLP_SECRET_KEY_STATUS_OPTION );
 
-	if ( ! empty( $existing_key ) && 'confirmed' === $existing_status ) {
-		// Already confirmed - nothing to do.
-		return;
+		if ( ! empty( $existing_key ) && 'confirmed' === $existing_status ) {
+			$timestamp = wp_next_scheduled( 'appwplp_secret_key_retry_event' );
+			if ( $timestamp ) {
+				wp_clear_scheduled_hook( 'appwplp_secret_key_retry_event' );
+			}
+			return;
+		}
+
+		if ( ! empty( $existing_key ) ) {
+			update_option( APPWPLP_SECRET_KEY_STATUS_OPTION, 'pending', false );
+			do_action( 'appwplp_secret_key_generated', $existing_key );
+		} else {
+			/*
+			* First installation - generate the key.
+			*/
+			$new_key = appwplp_generate_secret_key();
+			update_option( APPWPLP_SECRET_KEY_OPTION, $new_key, false );
+			update_option( APPWPLP_SECRET_KEY_STATUS_OPTION, 'pending', false );
+
+			do_action( 'appwplp_secret_key_generated', $new_key );
+			
+		}
+		if ( ! wp_next_scheduled( 'appwplp_secret_key_retry_event' ) ) {
+			wp_schedule_event( time() + ( 15 * MINUTE_IN_SECONDS ), 'appwplp_fifteen_minutes', 'appwplp_secret_key_retry_event' );
+		}
 	}
-
-	if ( ! empty( $existing_key ) ) {
-		update_option( APPWPLP_SECRET_KEY_STATUS_OPTION, 'pending', false );
-		do_action( 'appwplp_secret_key_generated', $existing_key );
-		return;
-	}
-
-	// No key - first-time generation.
-	$new_key = appwplp_generate_secret_key();
-
-	update_option( APPWPLP_SECRET_KEY_OPTION, $new_key, false );
-	update_option( APPWPLP_SECRET_KEY_STATUS_OPTION, 'pending', false );
-
-	do_action( 'appwplp_secret_key_generated', $new_key );
 }
 
-function appwplp_maybe_retry_secret_key_registration() {
-	$existing_status = get_option( APPWPLP_SECRET_KEY_STATUS_OPTION );
+add_filter( 'cron_schedules', function ( $schedules ) {
+	$schedules['appwplp_fifteen_minutes'] = array(
+		'interval' => 15 * MINUTE_IN_SECONDS,
+		'display'  => 'Every 15 Minutes',
+	);
+	return $schedules;
+} );
 
-	if ( 'confirmed' === $existing_status || empty( get_option( APPWPLP_SECRET_KEY_OPTION ) ) ) {
+add_action( 'appwplp_secret_key_retry_event', 'appwplp_maybe_generate_secret_key' );
+
+/**
+ * Runs the secret key routine once on existing installs.
+ *
+ * register_activation_hook() does not fire when WordPress updates a plugin
+ * in place, so sites upgrading from a version without this feature would
+ * never get a key. A stored feature version is compared against the current
+ * one so this runs exactly once per site after the update.
+ *
+ * @return void
+ */
+function appwplp_secret_key_version_check() {
+	if ( APPWPLP_SECRET_KEY_FEATURE_VERSION === get_option( APPWPLP_SECRET_KEY_VERSION_OPTION ) ) {
 		return;
 	}
-
-	$last_attempt = get_option( 'appwplp_secret_key_last_retry', 0 );
-	if ( ( time() - (int) $last_attempt ) < 15 * MINUTE_IN_SECONDS ) {
-		return; 
-	}
-
-	update_option( 'appwplp_secret_key_last_retry', time(), false );
 
 	appwplp_maybe_generate_secret_key();
+
+	update_option( APPWPLP_SECRET_KEY_VERSION_OPTION, APPWPLP_SECRET_KEY_FEATURE_VERSION, false );
 }
+add_action( 'admin_init', 'appwplp_secret_key_version_check' );
+
+/**
+ * Generates the secret key on activation and stamps the feature version so
+ * the upgrade check above does not repeat the work on the next admin load.
+ *
+ * @return void
+ */
+function appwplp_secret_key_activate() {
+	appwplp_maybe_generate_secret_key();
+	update_option( APPWPLP_SECRET_KEY_VERSION_OPTION, APPWPLP_SECRET_KEY_FEATURE_VERSION, false );
+}
+
 
 /**
  * Redirecting to the wizard page on plguin activation.
@@ -227,7 +267,7 @@ function deactivate_gdpr_cookie_consent() {
 }
 
 register_activation_hook( __FILE__, 'activate_gdpr_cookie_consent' );
-register_activation_hook( __FILE__, 'appwplp_maybe_generate_secret_key' );
+register_activation_hook( __FILE__, 'appwplp_secret_key_activate' );
 register_deactivation_hook( __FILE__, 'deactivate_gdpr_cookie_consent' );
 
 require plugin_dir_path( __FILE__ ) . 'includes/class-gdpr-cookies-read-csv.php';
@@ -331,6 +371,10 @@ function gdpr_display_user_mirgation_notice() {
 }
 // Added for plugin tour
 function gdpr_complete_tour() {
+    check_ajax_referer( 'gdpr-cookie-consent', '_ajax_nonce' );
+    if ( ! current_user_can( 'manage_options' ) ) {
+        wp_send_json_error( esc_html__( 'You do not have permission to perform this action.', 'gdpr-cookie-consent' ), 403 );
+    }
     update_option('gdpr_first_time_installed', false);
     wp_send_json_success();
 }

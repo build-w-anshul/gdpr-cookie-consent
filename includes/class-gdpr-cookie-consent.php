@@ -85,7 +85,7 @@ class Gdpr_Cookie_Consent {
 		if ( defined( 'GDPR_COOKIE_CONSENT_VERSION' ) ) {
 			$this->version = GDPR_COOKIE_CONSENT_VERSION;
 		} else {
-			$this->version = '4.4.1';
+			$this->version = '4.4.2';
 		}
 		add_action(
 			'current_screen',
@@ -286,7 +286,6 @@ class Gdpr_Cookie_Consent {
 			$this->loader->add_action( 'admin_init', $plugin_admin, 'gdpr_ab_testing_complete' );
 			// Register translation strings for extraction only
 			$this->loader->add_action( 'admin_init', $plugin_admin, 'gdpr_cookie_consent_register_translation_strings' );
-			$this->loader->add_action( 'rest_api_init', $plugin_admin, 'gdpr_cookie_data_endpoint' );
 		
 		}
 	}

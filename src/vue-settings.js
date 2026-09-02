@@ -3706,7 +3706,8 @@ var gen = new Vue({
         url: settings_obj.cookie_scan_settings.ajax_url,
         type: "POST",
         data: {
-          action: "wpl_get_gcm_status"
+          action: "wpl_get_gcm_status",
+          security: settings_obj.cookie_scan_settings.nonces.wpl_cookie_scanner,
         },
         success: (response) => {
           if (response.success) {

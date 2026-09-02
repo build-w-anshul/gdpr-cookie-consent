@@ -131,7 +131,6 @@ class Gdpr_Cookie_Consent_Admin {
 			add_action('refresh_gacm_vendor_list_event', array($this,'get_gacm_data'));
 			add_action( 'rest_api_init', array($this, 'allow_cors_for_react_app'));
 			add_action('rest_api_init', array($this, 'register_gdpr_dashboard_route'));
-			add_action('rest_api_init', array($this, 'wplp_gdpr_generate_api_secret'));
 			//For Import CSV option on Policy data page
 			add_action( 'admin_menu', array($this,'register_gdpr_policies_import_page') );
 			add_action('admin_menu', array($this,'gdpr_reorder_admin_menu'), 999);
@@ -3426,6 +3425,7 @@ class Gdpr_Cookie_Consent_Admin {
 			'settings_obj',
 			array(
 				'nonce'   						   => wp_create_nonce( 'wpl_save_script_nonce' ), // Generate nonce
+				'rest_nonce'					   => wp_create_nonce( 'wp_rest' ), // REST API cookie-auth nonce (X-WP-Nonce).
 				'gcc_enable_iab_nonce'			   => wp_create_nonce( 'gcc_enable_iab' ),
 				'the_options'                      => $settings,
 				'templates'     				   => $this -> templates_json,
@@ -8488,6 +8488,7 @@ class Gdpr_Cookie_Consent_Admin {
 			$this->plugin_name . '-main',
 			'settings_obj',
 			array(
+				'rest_nonce'                       => wp_create_nonce( 'wp_rest' ), // REST API cookie-auth nonce (X-WP-Nonce).
 				'the_options'                      => $settings,
 				'templates'     				   => $this -> templates_json,
 				'ajaxurl'                          => admin_url( 'admin-ajax.php' ),
@@ -9405,7 +9406,6 @@ class Gdpr_Cookie_Consent_Admin {
 				'user_email_id'					   => $user_email_id,
 				'location_status'				   => $locationStatus,
 				'client_site_name'				   => $client_site_name,
-				'api_secret' 					   => get_option('wplegalpages_api_secret'),
 			)
 		);
 	}
@@ -9954,6 +9954,76 @@ class Gdpr_Cookie_Consent_Admin {
 			'ids'     => $ids
 		];
 	}
+	/**
+	 * Shared validation helper - reused for both banner logos and revoke icons.
+	 *
+	 * @param string $image_base64 Raw or data-URI-wrapped base64 image data.
+	 * @param string $file_name    Requested file name.
+	 * @return array|WP_Error ['data' => decoded bytes, 'safe_name' => validated filename, 'mime' => mime type] or WP_Error on failure.
+	 */
+	private function gdpr_validate_uploaded_image( $image_base64, $file_name ) {
+		if ( ! is_string( $image_base64 ) || '' === trim( $image_base64 ) || ! is_string( $file_name ) ) {
+			return new WP_Error( 'invalid_upload', 'Image data and file name are required.' );
+		}
+
+		$allowed_mimes = $this->saas_logo_allowed_mimes();
+
+		// Accept a data URI wrapper, but only when it declares a mime we allow.
+		if ( 0 === strpos( $image_base64, 'data:' ) ) {
+			if ( ! preg_match( '#^data:([a-z0-9.+/-]+);base64,#i', $image_base64, $uri_parts ) ) {
+				return new WP_Error( 'invalid_upload', 'Malformed image data.' );
+			}
+			if ( ! in_array( strtolower( $uri_parts[1] ), $allowed_mimes, true ) ) {
+				return new WP_Error( 'invalid_upload', 'Unsupported image type.' );
+			}
+			$image_base64 = substr( $image_base64, strlen( $uri_parts[0] ) );
+		}
+
+		// Strict decode, so anything that is not clean base64 is rejected outright.
+		$image_data = base64_decode( $image_base64, true );
+		if ( false === $image_data || '' === $image_data ) {
+			return new WP_Error( 'invalid_upload', 'Image data could not be decoded.' );
+		}
+
+		if ( strlen( $image_data ) > ( 2 * MB_IN_BYTES ) ) {
+			return new WP_Error( 'invalid_upload', 'Image exceeds the 2 MB limit.' );
+		}
+
+		// Reduce to a bare file name and hold the extension to the allow list.
+		$file_name = sanitize_file_name( basename( $file_name ) );
+		if ( '' === $file_name ) {
+			return new WP_Error( 'invalid_upload', 'Invalid file name.' );
+		}
+
+		$filetype = wp_check_filetype( $file_name, $allowed_mimes );
+		if ( empty( $filetype['ext'] ) || empty( $filetype['type'] ) ) {
+			return new WP_Error( 'invalid_upload', 'Only JPG, PNG, GIF and WebP logos are allowed.' );
+		}
+
+		// Rebuild the name from a single validated extension. This collapses any
+		// inner extension, so "shell.php.jpg" can never reach the disk intact.
+		$base_name = str_replace( '.', '-', pathinfo( $file_name, PATHINFO_FILENAME ) );
+		$base_name = trim( sanitize_file_name( $base_name ), '-' );
+		if ( '' === $base_name ) {
+			$base_name = 'logo';
+		}
+		$safe_name = $base_name . '.' . $filetype['ext'];
+
+		// The bytes themselves must be the image the extension claims.
+		$image_info = @getimagesizefromstring( $image_data ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+		if ( ! is_array( $image_info ) || empty( $image_info['mime'] ) ) {
+			return new WP_Error( 'invalid_upload', 'File is not a valid image.' );
+		}
+		if ( strtolower( $image_info['mime'] ) !== $filetype['type'] ) {
+			return new WP_Error( 'invalid_upload', 'Image contents do not match the file extension.' );
+		}
+
+		return array(
+			'data'      => $image_data,
+			'safe_name' => $safe_name,
+			'mime'      => $filetype['type'],
+		);
+	}
 
 	public function gdpr_save_changes( WP_REST_Request $request){
 		$save_object = $request->get_param('save_object') ?: null;
@@ -10086,24 +10156,23 @@ class Gdpr_Cookie_Consent_Admin {
 				delete_option( $image['option']);
 			}
 			if(!isset($image['value']['image'])) continue;
-			$image_base64 = $image['value']['image'];
-			$file_name    = $image['value']['name'];
+			$validated = $this->gdpr_validate_uploaded_image( $image['value']['image'], $image['value']['name'] );
+			if ( is_wp_error( $validated ) ) {
+				continue; // skip this image, don't fail the whole save;
+			}
 
 			$upload_dir = wp_upload_dir();
-			$file_path = $upload_dir['path'] . '/' . $file_name;
+			$file_path = $upload_dir['path'] . '/' . $validated['safe_name'];
 
-			$image_data = base64_decode($image_base64);
-			file_put_contents($file_path, $image_data);
+			file_put_contents( $file_path, $validated['data'] );
 
-			$filetype = wp_check_filetype($file_name);
+			$attachment = array(
+				'post_mime_type' => $validated['mime'],
+				'post_title'     => sanitize_text_field( pathinfo( $validated['safe_name'], PATHINFO_FILENAME ) ),
+				'post_status'    => 'inherit',
+			);
 
-			$attachment = [
-				'post_mime_type' => $filetype['type'],
-				'post_title'     => pathinfo($file_name, PATHINFO_FILENAME),
-				'post_status'    => 'inherit'
-			];
-
-			$attach_id = wp_insert_attachment($attachment, $file_path);
+			$attach_id = wp_insert_attachment( $attachment, $file_path );
 			require_once ABSPATH . 'wp-admin/includes/image.php';
 
 			wp_update_attachment_metadata(
@@ -10134,30 +10203,29 @@ class Gdpr_Cookie_Consent_Admin {
 		
     		if ( !isset( $value['image'] ) ) continue;
 
-			$icon_base64 = $value['image'];
-			$file_name = $value['name'];
+			$validated = $this->gdpr_validate_uploaded_image( $value['image'], $value['name'] );
+			if ( is_wp_error( $validated ) ) {
+				continue; // skip this icon, don't fail the whole save
+			}
 
 			$upload_dir = wp_upload_dir();
 
 			$revoke_dir = $upload_dir['path'] . '/revoke/';
-			$file_path  = $revoke_dir . $file_name;
+			$file_path  = $revoke_dir . $validated['safe_name'];
 
 			if ( ! file_exists( $revoke_dir ) ) {
 			    wp_mkdir_p( $revoke_dir );
 			}
 
-			$icon_data = base64_decode( $icon_base64 );
-			file_put_contents( $file_path, $icon_data );
+			file_put_contents( $file_path, $validated['data'] );
 
-			$filetype = wp_check_filetype($file_name);
+			$attachment = array(
+				'post_mime_type' => $validated['mime'],
+				'post_title'     => sanitize_text_field( pathinfo( $validated['safe_name'], PATHINFO_FILENAME ) ),
+				'post_status'    => 'inherit',
+			);
 
-			$attachment = [
-				'post_mime_type' => $filetype['type'],
-				'post_title'     => pathinfo($file_name, PATHINFO_FILENAME),
-				'post_status'    => 'inherit'
-			];
-
-			$attach_id = wp_insert_attachment($attachment, $file_path);
+			$attach_id = wp_insert_attachment( $attachment, $file_path );
 			require_once ABSPATH . 'wp-admin/includes/image.php';
 
 			wp_update_attachment_metadata(
@@ -10555,7 +10623,7 @@ class Gdpr_Cookie_Consent_Admin {
 
 		$expected_signature = hash_hmac(
 			'sha256',
-			$timestamp . '|' . $request->get_body(),
+			'wplc-req-v1|' . $timestamp . '|' . $request->get_body(),
 			$secret_key
 		);
 		if ( ! hash_equals( $expected_signature, $signature ) ) {
@@ -10685,7 +10753,7 @@ class Gdpr_Cookie_Consent_Admin {
 		// Tmeister's plugin nests it here
 		$saas_user_id = $payload->data->user->id ?? 0;
 		$stored_user_id = $this->settings->get( 'account', 'id' );
-		if($saas_user_id !== $stored_user_id){
+		if ( (string) $saas_user_id !== (string) $stored_user_id ) {
 			return new WP_Error('token_validation_failed', 'Not the owner of the website!', ['status' => 401]);
 		}
 		// 3. Extract master_key from the request body
@@ -10735,6 +10803,20 @@ class Gdpr_Cookie_Consent_Admin {
 		$this->settings = new GDPR_Cookie_Consent_Settings();
 		
 		$is_user_connected = $this->settings->is_connected();
+
+
+		register_rest_route(
+			'custom/v1',
+			'/gdpr-data',
+			array(
+				'methods'  => 'GET',
+				'callback' => array( $this, 'gdpr_get_settings_new' ),
+				'permission_callback' => function () {
+					// return true;
+					return current_user_can('manage_options');
+				}
+			)
+		);
 
 		register_rest_route(
 			'wplp-react-gdpr/v1',
@@ -11086,16 +11168,6 @@ class Gdpr_Cookie_Consent_Admin {
 
 		register_rest_route(
 			'wplp-react-gdpr/v1',
-			'/upload-logo',
-			array(
-				'methods' => 'POST',
-				'callback' => array( $this, 'saas_upload_logo' ),
-				'permission_callback' => array($this, 'permission_callback_for_react_app'),
-			)
-		);
-
-		register_rest_route(
-			'wplp-react-gdpr/v1',
 			'/connect_to_wplp_compliance',
 			array(
 				'methods'	=> 'POST',
@@ -11208,10 +11280,9 @@ class Gdpr_Cookie_Consent_Admin {
 			return new WP_Error( 'invalid_request', 'Missing parameters.', array( 'status' => 400 ) );
 		}
 	
-		$response_hash = hash_hmac( 'sha256', $challenge, $secret );
+		$response_hash = hash_hmac( 'sha256', 'wplc-pair-v1|' . $challenge, $secret );
 		return rest_ensure_response( array( 'response' => $response_hash ) );
 	}
-	
 
 	function wplp_gdpr_generate_api_secret() {
 	    // Check if secret already exists
@@ -11227,6 +11298,9 @@ class Gdpr_Cookie_Consent_Admin {
 
 	    return $secret;
 	}
+	
+
+	
 
 	/**
 	 * REST API callback to update and store the subscription payment status.
@@ -13503,55 +13577,24 @@ public function gdpr_support_request_handler() {
 		);
 	}
 
-	public function saas_upload_logo( WP_REST_Request $request ) {
-
-		 $image_base64 = $request->get_param('image_base64');
-    	$file_name    = sanitize_file_name($request->get_param('file_name'));
-
-    	$upload_dir = wp_upload_dir();
-    	$file_path = $upload_dir['path'] . '/' . $file_name;
-
-    	$image_data = base64_decode($image_base64);
-    	file_put_contents($file_path, $image_data);
-
-    	$filetype = wp_check_filetype($file_name);
-
-    	$attachment = [
-    	    'post_mime_type' => $filetype['type'],
-    	    'post_title'     => pathinfo($file_name, PATHINFO_FILENAME),
-    	    'post_status'    => 'inherit'
-    	];
-
-    	$attach_id = wp_insert_attachment($attachment, $file_path);
-    	require_once ABSPATH . 'wp-admin/includes/image.php';
-
-    	wp_update_attachment_metadata(
-    	    $attach_id,
-    	    wp_generate_attachment_metadata($attach_id, $file_path)
-    	);
-
-    	return [
-    	    'attachment_id' => $attach_id,
-    	    'url' => wp_get_attachment_url($attach_id)
-    	];
-	}
 	/**
-	 * Registered rest end point to get the current banner options form database.
+	 * Mime types accepted for a logo upload.
+	 *
+	 * SVG is deliberately excluded - it can carry script and is served back
+	 * from the uploads directory.
+	 *
+	 * @return array Extension pattern => mime type.
 	 */
-	public function gdpr_cookie_data_endpoint() {
-		register_rest_route(
-			'custom/v1',
-			'/gdpr-data/',
-			array(
-				'methods'  => 'GET',
-				'callback' => array( $this, 'gdpr_get_settings_new' ),
-				'permission_callback' => function () {
-					return current_user_can('manage_options');
-				}
-			)
+	private function saas_logo_allowed_mimes() {
+		return array(
+			'jpg|jpeg|jpe' => 'image/jpeg',
+			'png'          => 'image/png',
+			'gif'          => 'image/gif',
+			'webp'         => 'image/webp',
 		);
 	}
 
+	
 	/**
 	 * Fetch Settings from database.
 	 *
@@ -13764,7 +13807,7 @@ public function gdpr_support_request_handler() {
 	function appwplp_register_secret_key_with_server( $site_key ) {
 		$site_url = site_url();
 		$response = wp_remote_post(
-			'https://app.wplegalpages.com/wp-json/appwplp/v1/register_secret_key',
+			GDPR_APP_URL . '/wp-json/appwplp/v1/register_secret_key',
 			array(
 				'timeout' => 15,
 				'headers' => array(
@@ -13776,7 +13819,6 @@ public function gdpr_support_request_handler() {
 				) ),
 			)
 		);
-	
 		if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
 			update_option( APPWPLP_SECRET_KEY_STATUS_OPTION, 'registration_failed', false );
 			return;

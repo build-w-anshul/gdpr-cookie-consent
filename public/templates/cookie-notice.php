@@ -874,6 +874,8 @@ if ( ! empty( $the_options['lgpd_notify'] )) {
 							position: fixed; 
 							display:none; 
 							bottom: 10px;  
+							height: 50px;
+							width: 50px;
 							<?php if($the_options['show_again_position' . $suffix] === 'right') 
 								echo "right: ". esc_html($the_options['show_again_margin' . $suffix]) . "%;"; 
 							else 
@@ -881,9 +883,11 @@ if ( ! empty( $the_options['lgpd_notify'] )) {
 							padding:0 !important;"
 					>
 						<img 
+							width="50"
+							height="50"
 							style="
-								height: 50px;
-								width: auto;
+								height: 100%;
+								width: 100%;
 								object-fit: contain;
 							" 
 							alt="revoke-icon" 
@@ -1007,6 +1011,8 @@ if ( ! empty( $the_options['gdpr_notify'] )) {
 							position: fixed; 
 							display:none; 
 							bottom: 10px;  
+							height: 50px;
+							width: 50px;
 							<?php if($the_options['show_again_position' . $suffix] === 'right') 
 								echo "right: ". esc_html($the_options['show_again_margin' . $suffix]) . "%;"; 
 							else 
@@ -1014,9 +1020,11 @@ if ( ! empty( $the_options['gdpr_notify'] )) {
 							padding:0 !important"
 					>
 						<img 
+							width="50"
+							height="50"
 							style="
-								height: 50px;
-								width: auto;
+								height: 100%;
+								width: 100%;
 								object-fit: contain;
 							" 
 							alt="revoke-icon" 
@@ -1137,12 +1145,16 @@ if ( ! empty( $the_options['eprivacy_notify'] ) ) {
 								echo "right: ". esc_html($the_options['show_again_margin' . $suffix]) . "%;"; 
 							else 
 								echo "left: ". esc_html($the_options['show_again_margin' . $suffix]) . "%;"; ?> 
+							height: 50px;
+							width: 50px;
 							padding:0 !important;"
 					>
 						<img 
+							width="50"
+							height="50"
 							style="
-								height: 50px;
-								width: auto;
+								height: 100%;
+								width: 100%;
 								object-fit: contain;
 							" 
 							alt="revoke-icon" 
