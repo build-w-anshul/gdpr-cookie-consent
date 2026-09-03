@@ -7667,6 +7667,7 @@ fieldset:disabled #gdpr-cookie-consent-bar a.btn {
   top: 88px;
   border-radius: 6px;
   padding: 16px;
+  z-index: 11;
 }
 .gdpr-banner-preview-logo-text {
   display: flex;

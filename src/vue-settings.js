@@ -3085,21 +3085,6 @@ var gen = new Vue({
       panels.forEach(panel => {
         this[panel] = false;
       });
-      // If it ends in 1 or 2, also open its paired variant.
-      if (panelName.endsWith('1') || panelName.endsWith('2')) {
-        const baseName = panelName.slice(0, -1);
-
-        const panel1 = `${baseName}1`;
-        const panel2 = `${baseName}2`;
-
-        if (panels.includes(panel1)) {
-          this[panel1] = true;
-        }
-
-        if (panels.includes(panel2)) {
-          this[panel2] = true;
-        }
-      }
 
       this[panelName] = true;
     },
@@ -3873,6 +3858,7 @@ var gen = new Vue({
     },
     onSwitchEnableSafe() {
       this.enable_safe = !this.enable_safe;
+      this.reload_onSafeMode = true;
     },
     onSwitchEnableUsageData() {
       this.usage_data = !this.usage_data;
@@ -3910,7 +3896,11 @@ var gen = new Vue({
       const siteAddress = window.location.origin;
 
       // Make an AJAX request to fetch data from the custom endpoint
-      fetch(siteAddress + "/wp-json/custom/v1/gdpr-data/")
+      fetch(siteAddress + "/wp-json/custom/v1/gdpr-data/",{
+            headers: {
+              "X-WP-Nonce": settings_obj.rest_nonce
+            }
+        })
         .then((response) => {
           if (!response.ok) {
             throw new Error("Network response was not ok");
